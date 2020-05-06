@@ -1,0 +1,1608 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{Ordered{\isacharunderscore}Trail}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsection{Graph Theory in the Archive of Formal Proofs%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+\label{GraphTheory} To increase the reusability of our library we build upon the \isa{Graph{\isacharunderscore}Theory}
+library by Noschinski \cite{Graph_Theory-AFP}. Graphs are represented as records consisting of vertices and edges that
+can be accessed using the selectors \isa{pverts} and \isa{parcs}. We recall the definition 
+of the type \isa{pair{\isacharunderscore}pre{\isacharunderscore}digraph}:
+
+ %
+\begin{isabelle}%
+record\ {\isacharprime}a\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isacharequal}\ pverts\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequote}{\isacharprime}a\ set{\isachardoublequote}\ parcs\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequote}{\isacharprime}a\ rel{\isachardoublequote}%
+\end{isabelle}
+
+Now restrictions upon the two sets and new features can be introduced using locales. 
+Locales are Isabelle's way to deal with parameterized theories~\cite{ballarin2010tutorial}. Consider
+for example \isa{pair{\isacharunderscore}wf{\isacharunderscore}digraph}.
+The endpoints of an edge can be accessed using the functions \isa{fst} and \isa{snd}. Therefore, conditions
+\isa{arc{\isacharunderscore}fst{\isacharunderscore}in{\isacharunderscore}verts} and \isa{arc{\isacharunderscore}snd{\isacharunderscore}in{\isacharunderscore}verts} assert that both endpoints of an edge are
+vertices. Using so-called sublocales a variety of other graphs are defined.  
+
+%
+\begin{isabelle}%
+locale\ pair{\isacharunderscore}wf{\isacharunderscore}digraph\ {\isacharequal}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isacharplus}\isanewline
+\ \ assumes\ arc{\isacharunderscore}fst{\isacharunderscore}in{\isacharunderscore}verts{\isacharcolon}\ {\isachardoublequote}{\isasymAnd}e{\isachardot}\ e\ {\isasymin}\ parcs\ G\ {\isasymLongrightarrow}\ fst\ e\ {\isasymin}\ pverts\ G{\isachardoublequote}\isanewline
+\ \ assumes\ arc{\isacharunderscore}snd{\isacharunderscore}in{\isacharunderscore}verts{\isacharcolon}\ {\isachardoublequote}{\isasymAnd}e{\isachardot}\ e\ {\isasymin}\ parcs\ G\ {\isasymLongrightarrow}\ snd\ e\ {\isasymin}\ pverts\ G{\isachardoublequote}%
+\end{isabelle}
+
+An object of type \isa{{\isacharprime}b\ awalk} is defined in \isa{Graph{\isacharunderscore}Theory{\isachardot}Arc{\isacharunderscore}Walk} as a list of edges. 
+Additionally, the definition \isa{awalk} imposes that both endpoints of a walk are vertices of 
+the graph, all elements of the walk are edges and two subsequent edges share a common vertex. \vspace{1em}
+
+\noindent\isa{type{\isacharunderscore}synonym\ {\isacharprime}b\ awalk\ {\isacharequal}\ {\isachardoublequote}{\isacharprime}b\ list{\isachardoublequote}}
+
+%
+\begin{isabelle}%
+definition\ awalk\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequote}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b\ awalk\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ bool{\isachardoublequote}\isanewline
+{\isachardoublequote}awalk\ u\ p\ v\ {\isasymequiv}\ u\ {\isasymin}\ verts\ G\ {\isasymand}\ set\ p\ {\isasymsubseteq}\ arcs\ G\ {\isasymand}\ cas\ u\ p\ v{\isachardoublequote}\ %
+\end{isabelle}
+
+\noindent We also reuse the type synonym \isa{weight{\isacharunderscore}fun} introduced in \mbox{\isa{Weighted{\isacharunderscore}Graph}}. \vspace{1em}
+
+\isa{type{\isacharunderscore}synonym\ {\isacharprime}b\ weight{\isacharunderscore}fun\ {\isacharequal}\ {\isachardoublequote}{\isacharprime}b\ {\isasymRightarrow}\ real{\isachardoublequote}}  \vspace{1em}
+
+Finally, there is an useful definition capturing the notion of a complete graph, namely \isa{complete{\isacharunderscore}digraph}.%
+\end{isamarkuptext}\isamarkuptrue%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsection{Formalization of Trail Properties in Isabelle/HOL%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+\label{Formalization}%
+\end{isamarkuptext}\isamarkuptrue%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsubsection{Increasing and Decreasing Trails in Weighted Graphs%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+\label{trails} In our work we extend the graph theory framework from Section \ref{GraphTheory} 
+with new features enabling reasoning about trails. To this end,
+ a trail is defined as a list of edges. We will only consider strictly increasing trails 
+on graphs without parallel edges. For this we require the graph 
+to be of type \isa{pair{\isacharunderscore}pre{\isacharunderscore}digraph}, as introduced in Section \ref{GraphTheory}. 
+
+Two different definitions
+are given in our formalization. Function \isa{incTrail} can be used without specifying the first and last vertex of the trail
+whereas \isa{incTrail{\isadigit{2}}} uses more of \isa{Graph{\isacharunderscore}Theory{\isacharprime}s} predefined features. Moreover, making use of  monotonicity
+\mbox{\isa{incTrail}} only requires to check if one edge's weight is smaller than its successors' while \isa{incTrail{\isadigit{2}}}
+checks if the weight is smaller than the one of all subsequent edges in the sequence, i.e. if the list 
+is sorted. The {\em equivalence
+between the two notions} is shown in the following.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ incTrail\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a\ {\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a\ {\isasymtimes}{\isacharprime}a{\isacharparenright}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+{\isachardoublequoteopen}incTrail\ g\ w\ {\isacharbrackleft}{\isacharbrackright}\ {\isacharequal}\ True{\isachardoublequoteclose}\ {\isacharbar}\isanewline
+{\isachardoublequoteopen}incTrail\ g\ w\ {\isacharbrackleft}e\isactrlsub {\isadigit{1}}{\isacharbrackright}\ {\isacharequal}\ {\isacharparenleft}e\isactrlsub {\isadigit{1}}\ {\isasymin}\ parcs\ g{\isacharparenright}{\isachardoublequoteclose}\ {\isacharbar}\isanewline
+{\isachardoublequoteopen}incTrail\ g\ w\ {\isacharparenleft}e\isactrlsub {\isadigit{1}}{\isacharhash}e\isactrlsub {\isadigit{2}}{\isacharhash}es{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ w\ e\isactrlsub {\isadigit{1}}\ {\isacharless}\ w\ e\isactrlsub {\isadigit{2}}\ {\isasymand}\ e\isactrlsub {\isadigit{1}}\ {\isasymin}\ parcs\ g\ {\isasymand}\ snd\ e\isactrlsub {\isadigit{1}}\ {\isacharequal}\ fst\ e\isactrlsub {\isadigit{2}}\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ then\ incTrail\ g\ w\ {\isacharparenleft}e\isactrlsub {\isadigit{2}}{\isacharhash}es{\isacharparenright}\ else\ False{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph{\isacharparenright}\ incTrail{\isadigit{2}}\ \isakeyword{where}\ \isanewline
+{\isachardoublequoteopen}incTrail{\isadigit{2}}\ w\ es\ u\ v\ {\isasymequiv}\ sorted{\isacharunderscore}wrt\ {\isacharparenleft}{\isasymlambda}\ e\isactrlsub {\isadigit{1}}\ e\isactrlsub {\isadigit{2}}{\isachardot}\ w\ e\isactrlsub {\isadigit{1}}\ {\isacharless}\ w\ e\isactrlsub {\isadigit{2}}{\isacharparenright}\ es\ {\isasymand}\ {\isacharparenleft}es\ {\isacharequal}\ {\isacharbrackleft}{\isacharbrackright}\ {\isasymor}\ awalk\ u\ es\ v{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isanewline
+\isacommand{fun}\isamarkupfalse%
+\ decTrail\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a\ {\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a\ {\isasymtimes}{\isacharprime}a{\isacharparenright}\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+{\isachardoublequoteopen}decTrail\ g\ w\ {\isacharbrackleft}{\isacharbrackright}\ {\isacharequal}\ True{\isachardoublequoteclose}\ {\isacharbar}\isanewline
+{\isachardoublequoteopen}decTrail\ g\ w\ {\isacharbrackleft}e\isactrlsub {\isadigit{1}}{\isacharbrackright}\ {\isacharequal}\ {\isacharparenleft}e\isactrlsub {\isadigit{1}}\ {\isasymin}\ parcs\ g{\isacharparenright}{\isachardoublequoteclose}\ {\isacharbar}\isanewline
+{\isachardoublequoteopen}decTrail\ g\ w\ {\isacharparenleft}e\isactrlsub {\isadigit{1}}{\isacharhash}e\isactrlsub {\isadigit{2}}{\isacharhash}es{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ w\ e\isactrlsub {\isadigit{1}}\ {\isachargreater}\ w\ e\isactrlsub {\isadigit{2}}\ {\isasymand}\ e\isactrlsub {\isadigit{1}}\ {\isasymin}\ parcs\ g\ {\isasymand}\ snd\ e\isactrlsub {\isadigit{1}}\ {\isacharequal}\ fst\ e\isactrlsub {\isadigit{2}}\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ then\ decTrail\ g\ w\ {\isacharparenleft}e\isactrlsub {\isadigit{2}}{\isacharhash}es{\isacharparenright}\ else\ False{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph{\isacharparenright}\ decTrail{\isadigit{2}}\ \isakeyword{where}\ \isanewline
+{\isachardoublequoteopen}decTrail{\isadigit{2}}\ w\ es\ u\ v\ {\isasymequiv}\ sorted{\isacharunderscore}wrt\ {\isacharparenleft}{\isasymlambda}\ e\isactrlsub {\isadigit{1}}\ e\isactrlsub {\isadigit{2}}{\isachardot}\ w\ e\isactrlsub {\isadigit{1}}\ {\isachargreater}\ w\ e\isactrlsub {\isadigit{2}}{\isacharparenright}\ es\ {\isasymand}\ {\isacharparenleft}es\ {\isacharequal}\ {\isacharbrackleft}{\isacharbrackright}\ {\isasymor}\ awalk\ u\ es\ v{\isacharparenright}{\isachardoublequoteclose}%
+\begin{isamarkuptext}%
+Defining trails as lists in Isabelle has many advantages including using predefined list operators, 
+e.g., drop. Thus, we can show one result that will be constantly needed in the following, that is, that
+{\em any subtrail of an ordered trail is an ordered trail itself}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+\ incTrail{\isacharunderscore}subtrail{\isacharcolon}\ \isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}incTrail\ g\ w\ es{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}incTrail\ g\ w\ {\isacharparenleft}drop\ k\ es{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+\ decTrail{\isacharunderscore}subtrail{\isacharcolon}\ \isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}decTrail\ g\ w\ es{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}decTrail\ g\ w\ {\isacharparenleft}drop\ k\ es{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+In Isabelle we then show the equivalence between the two definitions \isa{decTrail} and \isa{decTrail{\isadigit{2}}} of strictly decreasing trails.
+Similarly, we also show the equivalence between the definition \isa{incTrail} and \isa{incTrail{\isadigit{2}}} of strictly increasing trails.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}wf{\isacharunderscore}digraph{\isacharparenright}\ decTrail{\isacharunderscore}is{\isacharunderscore}dec{\isacharunderscore}walk{\isacharcolon}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}decTrail\ G\ w\ es\ {\isasymlongleftrightarrow}\ decTrail{\isadigit{2}}\ w\ es\ {\isacharparenleft}fst\ {\isacharparenleft}hd\ es{\isacharparenright}{\isacharparenright}\ {\isacharparenleft}snd\ {\isacharparenleft}last\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}wf{\isacharunderscore}digraph{\isacharparenright}\ incTrail{\isacharunderscore}is{\isacharunderscore}inc{\isacharunderscore}walk{\isacharcolon}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}incTrail\ G\ w\ es\ {\isasymlongleftrightarrow}\ incTrail{\isadigit{2}}\ w\ es\ {\isacharparenleft}fst\ {\isacharparenleft}hd\ es{\isacharparenright}{\isacharparenright}\ {\isacharparenleft}snd\ {\isacharparenleft}last\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Any strictly decreasing trail $(e_1,\ldots,e_n)$ can also be seen as a strictly increasing trail $(e_n,...,e_1)$
+if the graph considered is undirected. To this end, we make use of the locale \isa{pair{\isacharunderscore}sym{\isacharunderscore}digraph}
+that captures the idea of symmetric arcs. However, it is also necessary to assume that the weight 
+function assigns the same weight to edge $(v_i,v_j)$ as to $(v_j,v_i)$. This assumption is therefore
+added to \isa{decTrail{\isacharunderscore}eq{\isacharunderscore}rev{\isacharunderscore}incTrail} and \isa{incTrail{\isacharunderscore}eq{\isacharunderscore}rev{\isacharunderscore}decTrail}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}sym{\isacharunderscore}digraph{\isacharparenright}\ decTrail{\isacharunderscore}eq{\isacharunderscore}rev{\isacharunderscore}incTrail{\isacharcolon}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}{\isasymforall}\ v\isactrlsub {\isadigit{1}}\ v\isactrlsub {\isadigit{2}}{\isachardot}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ w{\isacharparenleft}v\isactrlsub {\isadigit{2}}{\isacharcomma}v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isachardoublequoteclose}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}decTrail\ G\ w\ es\ {\isasymlongleftrightarrow}\ incTrail\ G\ w\ {\isacharparenleft}rev\ {\isacharparenleft}map\ {\isacharparenleft}{\isasymlambda}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}{\isachardot}\ {\isacharparenleft}v\isactrlsub {\isadigit{2}}{\isacharcomma}v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isacharparenright}\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\ \ \ \ %
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ pair{\isacharunderscore}sym{\isacharunderscore}digraph{\isacharparenright}\ incTrail{\isacharunderscore}eq{\isacharunderscore}rev{\isacharunderscore}decTrail{\isacharcolon}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}{\isasymforall}\ v\isactrlsub {\isadigit{1}}\ v\isactrlsub {\isadigit{2}}{\isachardot}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ w{\isacharparenleft}v\isactrlsub {\isadigit{2}}{\isacharcomma}v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isachardoublequoteclose}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}incTrail\ G\ w\ es\ {\isasymlongleftrightarrow}\ decTrail\ G\ w\ {\isacharparenleft}rev\ {\isacharparenleft}map\ {\isacharparenleft}{\isasymlambda}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}{\isachardot}\ {\isacharparenleft}v\isactrlsub {\isadigit{2}}{\isacharcomma}v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isacharparenright}\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsubsection{Weighted Graphs%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+\label{localeSurjective} We add the locale \isa{weighted{\isacharunderscore}pair{\isacharunderscore}graph} 
+on top of the locale \isa{pair{\isacharunderscore}graph} introduced in \isa{Graph{\isacharunderscore}Theory}. A  \isa{pair{\isacharunderscore}graph} is a 
+finite, loop free and symmetric graph. We do not restrict the types of vertices and edges but impose 
+the condition that they have to be a linear order.
+
+ Furthermore, all weights have to be integers between 0 and $\lfloor\frac{q}{2}\rfloor$ where 0 is 
+used as a special value to indicate that there is no edge at that position. Since the 
+range of the weight function is in the reals, the set of natural numbers
+\mbox{\isa{{\isacharbraceleft}{\isadigit{1}}{\isacharcomma}{\isachardot}{\isachardot}{\isacharcomma}card\ {\isacharparenleft}parcs\ G{\isacharparenright}\ div\ {\isadigit{2}}{\isacharbraceright}}} has to be casted into a set of reals. This is realized by taking the image
+of the function \isa{real} that casts a natural number to a real.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{locale}\isamarkupfalse%
+\ weighted{\isacharunderscore}pair{\isacharunderscore}graph\ {\isacharequal}\ pair{\isacharunderscore}graph\ {\isachardoublequoteopen}{\isacharparenleft}G{\isacharcolon}{\isacharcolon}\ {\isacharparenleft}{\isacharprime}a{\isacharcolon}{\isacharcolon}linorder{\isacharparenright}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph{\isacharparenright}{\isachardoublequoteclose}\ \isakeyword{for}\ G\ {\isacharplus}\isanewline
+\ \ \isakeyword{fixes}\ w\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{assumes}\ dom{\isacharcolon}\ {\isachardoublequoteopen}e\ {\isasymin}\ parcs\ G\ {\isasymlongrightarrow}\ w\ e\ {\isasymin}\ real\ {\isacharbackquote}\ {\isacharbraceleft}{\isadigit{1}}{\isachardot}{\isachardot}card\ {\isacharparenleft}parcs\ G{\isacharparenright}\ div\ {\isadigit{2}}{\isacharbraceright}{\isachardoublequoteclose}\ \isanewline
+\ \ \ \ \ \ \isakeyword{and}\ vert{\isacharunderscore}ge{\isacharcolon}\ {\isachardoublequoteopen}card\ {\isacharparenleft}pverts\ G{\isacharparenright}\ {\isasymge}\ {\isadigit{1}}{\isachardoublequoteclose}\ %
+\begin{isamarkuptext}%
+We introduce some useful abbreviations, according to the ones in Section \ref{Prelim}%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{abbreviation}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ {\isachardoublequoteopen}q\ {\isasymequiv}\ card\ {\isacharparenleft}parcs\ G{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ {\isachardoublequoteopen}n\ {\isasymequiv}\ card\ {\isacharparenleft}pverts\ G{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ {\isachardoublequoteopen}W\ {\isasymequiv}\ {\isacharbraceleft}{\isadigit{1}}{\isachardot}{\isachardot}q\ div\ {\isadigit{2}}{\isacharbraceright}{\isachardoublequoteclose}%
+\begin{isamarkuptext}%
+Note an important difference between Section \ref{PaperProof} and our formalization. Although 
+a \isa{weighted{\isacharunderscore}pair{\isacharunderscore}graph} is symmetric, the edge set contains both ``directions" of an edge, 
+i.e., $(v_1,v_2)$ and $(v_2,v_1)$ are both in \isa{parcs\ G}. Thus, the maximum number of edges (in the 
+case that the graph is complete) is $n\cdot(n-1)$ and not $\frac{n\cdot(n-1)}{2}$. Another consequence is that
+the number $q$ of edges is always even.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+\ {\isacharparenleft}\isakeyword{in}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ max{\isacharunderscore}arcs{\isacharcolon}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}card\ {\isacharparenleft}parcs\ G{\isacharparenright}\ {\isasymle}\ n{\isacharasterisk}{\isacharparenleft}n{\isacharminus}{\isadigit{1}}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+\ {\isacharparenleft}\isakeyword{in}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ even{\isacharunderscore}arcs{\isacharcolon}\ \isanewline
+\isakeyword{shows}\ {\isachardoublequoteopen}even\ q{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+The below sublocale \isa{distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph} refines
+\isa{weighted{\isacharunderscore}pair{\isacharunderscore}graph}. The condition 
+\isa{zero} fixes the meaning of 0.
+The weight function is defined on the set of all vertices but since self loops are not allowed; 
+we use 0 as a special value to indicate the unavailability of the edge. 
+The second condition \isa{distinct} enforces that no two edges can have the same weight. There
+are some exceptions however captured in the statement \isa{{\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ u\isactrlsub {\isadigit{2}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ u\isactrlsub {\isadigit{1}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ u\isactrlsub {\isadigit{1}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ u\isactrlsub {\isadigit{2}}{\isacharparenright}}.
+Firstly, $(v_1,v_2)$ should have the same weight as $(v_2,v_1)$. Secondly, $w(v_1,v_2)$ has the
+same value as $w(v_1,v_2)$. Note that both edges being self loops resulting in them both having 
+weight 0 is prohibited by condition \isa{zero}.
+Our decision to separate these two conditions from the ones in \isa{weighted{\isacharunderscore}pair{\isacharunderscore}graph}
+instead of making one locale of its own is two-fold: On the one hand, there are scenarios where 
+distinctiveness is not wished for. On the other hand, 0 might not be available as a special value.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{locale}\isamarkupfalse%
+\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph\ {\isacharequal}\ weighted{\isacharunderscore}pair{\isacharunderscore}graph\ {\isacharplus}\ \isanewline
+\ \ \isakeyword{assumes}\ zero{\isacharcolon}\ {\isachardoublequoteopen}{\isasymforall}\ v\isactrlsub {\isadigit{1}}\ v\isactrlsub {\isadigit{2}}{\isachardot}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isasymnotin}\ parcs\ G\ {\isasymlongleftrightarrow}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ {\isadigit{0}}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \isakeyword{and}\ distinct{\isacharcolon}\ {\isachardoublequoteopen}{\isasymforall}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isasymin}\ parcs\ G{\isachardot}\ {\isasymforall}\ {\isacharparenleft}u{\isadigit{1}}{\isacharcomma}u{\isadigit{2}}{\isacharparenright}\ {\isasymin}\ parcs\ G{\isachardot}\ \isanewline
+\ \ \ \ \ \ {\isacharparenleft}{\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ u{\isadigit{2}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ u{\isadigit{1}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ u{\isadigit{1}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ u{\isadigit{2}}{\isacharparenright}{\isacharparenright}\ {\isasymlongleftrightarrow}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ w\ {\isacharparenleft}u{\isadigit{1}}{\isacharcomma}u{\isadigit{2}}{\isacharparenright}{\isachardoublequoteclose}\ \isanewline
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+One important step in our formalization is to show that the weight function is surjective. However, having two 
+elements of the domain (edges) being mapped to the same element of the codomain (weight) makes 
+the proof complicated. We therefore first prove that the weight function is surjective on a restricted
+set of edges. Here we use the fact that there is a linear order on vertices by only considering edges
+were the first endpoint is bigger than the second. 
+
+Then, the surjectivity of $w$ is relatively simple to show. Note that we could also have assumed surjectivity in 
+\isa{distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph} and shown that distinctiveness follows from it. However,
+distinctiveness is the more natural assumption that is more likely to appear in any application
+of ordered trails.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ restricted{\isacharunderscore}weight{\isacharunderscore}fun{\isacharunderscore}surjective{\isacharcolon}\ \ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}{\isasymforall}k\ {\isasymin}\ W{\isachardot}\ {\isasymexists}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isasymin}\ {\isacharparenleft}parcs\ G{\isacharparenright}{\isachardot}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ k{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ weight{\isacharunderscore}fun{\isacharunderscore}surjective{\isacharcolon}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}{\isasymforall}k\ {\isasymin}\ W{\isachardot}\ {\isasymexists}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isasymin}\ {\isacharparenleft}parcs\ G{\isacharparenright}{\isachardot}\ w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ k{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsubsection{Computing a Longest Ordered Trail%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+\label{compAlgo}We next formally verify Algorithm \ref{algo} and compute longest ordered trails. To this end, 
+we introduce the function \isa{findEdge} to find an edge in a list of edges by its weight.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ findEdge\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}\ list\ {\isasymRightarrow}\ real\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+{\isachardoublequoteopen}findEdge\ f\ {\isacharbrackleft}{\isacharbrackright}\ k\ {\isacharequal}\ undefined{\isachardoublequoteclose}\ {\isacharbar}\isanewline
+{\isachardoublequoteopen}findEdge\ f\ {\isacharparenleft}e{\isacharhash}es{\isacharparenright}\ k\ {\isacharequal}\ {\isacharparenleft}if\ f\ e\ {\isacharequal}\ k\ then\ e\ else\ findEdge\ f\ es\ k{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Function \isa{findEdge} will correctly return the edge whose weight is $k$. We do not care in which order the endpoints
+are found, i.e. whether $(v_1,v_2)$ or $(v_2,v_1)$ is returned.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ findEdge{\isacharunderscore}success{\isacharcolon}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}k\ {\isasymin}\ W{\isachardoublequoteclose}\ \isakeyword{and}\ {\isachardoublequoteopen}w\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ k{\isachardoublequoteclose}\ \isakeyword{and}\ {\isachardoublequoteopen}{\isacharparenleft}parcs\ G{\isacharparenright}\ {\isasymnoteq}\ {\isacharbraceleft}{\isacharbraceright}{\isachardoublequoteclose}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}findEdge\ w\ {\isacharparenleft}set{\isacharunderscore}to{\isacharunderscore}list\ {\isacharparenleft}parcs\ G{\isacharparenright}{\isacharparenright}\ k{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ \isanewline
+\ \ \ \ \ \ \ \ {\isasymor}\ {\isacharparenleft}findEdge\ w\ {\isacharparenleft}set{\isacharunderscore}to{\isacharunderscore}list\ {\isacharparenleft}parcs\ G{\isacharparenright}{\isacharparenright}\ k{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}v\isactrlsub {\isadigit{2}}{\isacharcomma}v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+We translate the notion of a labelling function $L^i(v)$ (see Definition \ref{Labelling}) into Isabelle.
+Function \isa{getL\ G\ w}, in short for get label, returns the length of the longest strictly decreasing
+path starting at vertex $v$. In contrast to Definition \ref{Labelling} subgraphs are treated here implicitly. Intuitively,
+this can be seen as adding edges to an empty graph in order of their weight.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ getL\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a{\isacharcolon}{\isacharcolon}linorder{\isacharparenright}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ nat{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+{\isachardoublequoteopen}getL\ g\ w\ {\isadigit{0}}\ v\ {\isacharequal}\ {\isadigit{0}}{\isachardoublequoteclose}\ {\isacharbar}\ \ \isanewline
+{\isachardoublequoteopen}getL\ g\ w\ {\isacharparenleft}Suc\ i{\isacharparenright}\ v\ {\isacharequal}\ {\isacharparenleft}let\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}findEdge\ w\ {\isacharparenleft}set{\isacharunderscore}to{\isacharunderscore}list\ {\isacharparenleft}arcs\ g{\isacharparenright}{\isacharparenright}\ {\isacharparenleft}Suc\ i{\isacharparenright}{\isacharparenright}\ in\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ v\ {\isacharequal}\ v\isactrlsub {\isadigit{1}}\ then\ max\ {\isacharparenleft}{\isacharparenleft}getL\ g\ w\ i\ v\isactrlsub {\isadigit{2}}{\isacharparenright}{\isacharplus}{\isadigit{1}}{\isacharparenright}\ {\isacharparenleft}getL\ g\ w\ i\ v{\isacharparenright}\ else\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ v\ {\isacharequal}\ v\isactrlsub {\isadigit{2}}\ then\ max\ {\isacharparenleft}{\isacharparenleft}getL\ g\ w\ i\ v\isactrlsub {\isadigit{1}}{\isacharparenright}{\isacharplus}{\isadigit{1}}{\isacharparenright}\ {\isacharparenleft}getL\ g\ w\ i\ v{\isacharparenright}\ else\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getL\ g\ w\ i\ v{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\begin{isamarkuptext}%
+To add all edges to the graph, set $i=|E|$. Recall that \isa{card\ {\isacharparenleft}parcs\ g{\isacharparenright}} $= 2*|E|$, 
+as every edge appears twice. 
+Then, iterate over all vertices and give back the
+maximum length which is found by using \isa{getL\ G\ w}. Since \isa{getL\ G\ w} can also be used to get a longest 
+strictly increasing trail ending at vertex $v$ the algorithm is not restricted to strictly decreasing trails.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ getLongestTrail\ {\isacharcolon}{\isacharcolon}\ \isanewline
+{\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a{\isacharcolon}{\isacharcolon}linorder{\isacharparenright}\ pair{\isacharunderscore}pre{\isacharunderscore}digraph\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a{\isasymtimes}{\isacharprime}a{\isacharparenright}\ weight{\isacharunderscore}fun\ {\isasymRightarrow}\ nat{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+{\isachardoublequoteopen}getLongestTrail\ g\ w\ {\isacharequal}\ \isanewline
+Max\ {\isacharparenleft}set\ {\isacharbrackleft}{\isacharparenleft}getL\ g\ w\ {\isacharparenleft}card\ {\isacharparenleft}parcs\ g{\isacharparenright}\ div\ {\isadigit{2}}{\isacharparenright}\ v{\isacharparenright}\ {\isachardot}\ v\ {\isacharless}{\isacharminus}\ sorted{\isacharunderscore}list{\isacharunderscore}of{\isacharunderscore}set\ {\isacharparenleft}pverts\ g{\isacharparenright}{\isacharbrackright}{\isacharparenright}{\isachardoublequoteclose}%
+\begin{isamarkuptext}%
+Exporting the algorithm into Haskell code results in a fully verified program to find a longest
+strictly decreasing or strictly increasing trail.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{export{\isacharunderscore}code}\isamarkupfalse%
+\ getLongestTrail\ \isakeyword{in}\ Haskell\ \isakeyword{module{\isacharunderscore}name}\ LongestTrail%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Using an induction proof and extensive case distinction, the correctness of Algorithm \ref{algo} 
+is then shown in our formalization, by proving the following theorem:%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{theorem}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ \ correctness{\isacharcolon}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}{\isasymexists}\ v\ {\isasymin}\ {\isacharparenleft}pverts\ G{\isacharparenright}{\isachardot}\ getL\ G\ w\ {\isacharparenleft}q\ div\ {\isadigit{2}}{\isacharparenright}\ v\ {\isacharequal}\ k{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isasymexists}\ xs{\isachardot}\ decTrail\ G\ w\ xs\ {\isasymand}\ length\ xs\ {\isacharequal}\ k{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsubsection{Minimum Length of Ordered Trails%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+\label{minLength}
+The algorithm introduced in Section \ref{compAlgo} is already useful on its own. Additionally, it can be
+used to verify the lower bound on the minimum length of a strictly decreasing trail $P_d(w,G) \ge 2 \cdot \lfloor \frac{q}{n} \rfloor$.
+
+To this end, Lemma 1 from Section \ref{PaperProof} is translated into Isabelle as the lemma
+\isa{minimal{\isacharunderscore}increase{\isacharunderscore}one{\isacharunderscore}step}. The proof is 
+similar to its counterpart, also using a case distinction. Lemma 2 is subsequently proved, here
+named \isa{minimal{\isacharunderscore}increase{\isacharunderscore}total}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ minimal{\isacharunderscore}increase{\isacharunderscore}one{\isacharunderscore}step{\isacharcolon}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}k\ {\isacharplus}\ {\isadigit{1}}\ {\isasymin}\ W{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ \isanewline
+\ \ \ \ {\isachardoublequoteopen}{\isacharparenleft}{\isasymSum}\ v\ {\isasymin}\ pverts\ G{\isachardot}\ getL\ G\ w\ {\isacharparenleft}k{\isacharplus}{\isadigit{1}}{\isacharparenright}\ v{\isacharparenright}\ {\isasymge}\ {\isacharparenleft}{\isasymSum}\ v\ {\isasymin}\ pverts\ G{\isachardot}\ getL\ G\ w\ k\ v{\isacharparenright}\ {\isacharplus}\ {\isadigit{2}}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ minimal{\isacharunderscore}increase{\isacharunderscore}total{\isacharcolon}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}{\isasymSum}\ v\ {\isasymin}\ pverts\ G{\isachardot}\ getL\ G\ w\ {\isacharparenleft}q\ div\ {\isadigit{2}}{\isacharparenright}\ v{\isacharparenright}\ {\isasymge}\ q{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+From \isa{minimal{\isacharunderscore}increase{\isacharunderscore}total} we have that that the sum of all labels after $q$ div $2$ steps is 
+greater than $q$. Now assume that all labels are smaller than $q$ div $n$. Because we have $n$ vertices, this
+leads to a contradiction, which proves \isa{algo{\isacharunderscore}result{\isacharunderscore}min}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ algo{\isacharunderscore}result{\isacharunderscore}min{\isacharcolon}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}{\isasymexists}\ v\ {\isasymin}\ pverts\ G{\isachardot}\ getL\ G\ w\ {\isacharparenleft}q\ div\ {\isadigit{2}}{\isacharparenright}\ v\ {\isasymge}\ q\ div\ n{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Finally, using lemma \isa{algo{\isacharunderscore}result{\isacharunderscore}min} together with the \isa{correctness} theorem 
+of section \ref{compAlgo}, we prove the lower bound of $2\cdot\lfloor \frac{q}{n} \rfloor$ over the length 
+of a longest strictly decreasing trail. This general approach could also be used to extend our
+formalization and prove existence of other trails. For example, assume that some restrictions on the graph 
+give raise to the existence of a trail of length $m \ge 2\cdot\lfloor \frac{q}{n} \rfloor$. Then, it is
+only necessary to show that our algorithm can find this trail.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{theorem}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ dec{\isacharunderscore}trail{\isacharunderscore}exists{\isacharcolon}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isasymexists}\ es{\isachardot}\ decTrail\ G\ w\ es\ {\isasymand}\ length\ es\ {\isacharequal}\ q\ div\ n{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{theorem}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ inc{\isacharunderscore}trail{\isacharunderscore}exists{\isacharcolon}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isasymexists}\ es{\isachardot}\ incTrail\ G\ w\ es\ {\isasymand}\ length\ es\ {\isacharequal}\ q\ div\ n{\isachardoublequoteclose}\isanewline
+\ \ %
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Corollary 1 is translated into \isa{dec{\isacharunderscore}trail{\isacharunderscore}exists{\isacharunderscore}complete}. The proof first argues
+that the number of edges is $n\cdot(n-1)$ by restricting its domain as done already in Section \ref{localeSurjective}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+{\isacharparenleft}\isakeyword{in}\ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph{\isacharparenright}\ dec{\isacharunderscore}trail{\isacharunderscore}exists{\isacharunderscore}complete{\isacharcolon}\ \isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}complete{\isacharunderscore}digraph\ n\ G{\isachardoublequoteclose}\ \isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}{\isacharparenleft}{\isasymexists}\ es{\isachardot}\ decTrail\ G\ w\ es\ {\isasymand}\ length\ es\ {\isacharequal}\ n{\isacharminus}{\isadigit{1}}{\isacharparenright}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\isatagdocument
+%
+\isamarkupsubsection{Example Graph $K_4$%
+}
+\isamarkuptrue%
+%
+\endisatagdocument
+{\isafolddocument}%
+%
+\isadelimdocument
+%
+\endisadelimdocument
+%
+\begin{isamarkuptext}%
+We return to the example graph from Figure \ref{exampleGraph} and show that our results from 
+Sections \ref{trails}-\ref{minLength} can be used to prove existence of trails of length $k$, in particular
+$k = 3$ in $K_4$. Defining the graph and the 
+weight function separately, we use natural numbers as vertices.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{abbreviation}\isamarkupfalse%
+\ ExampleGraph{\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}nat\ pair{\isacharunderscore}pre{\isacharunderscore}digraph{\isachardoublequoteclose}\ \isakeyword{where}\ \isanewline
+{\isachardoublequoteopen}ExampleGraph\ {\isasymequiv}\ {\isacharparenleft}{\isacharbar}\ \isanewline
+pverts\ {\isacharequal}\ {\isacharbraceleft}{\isadigit{1}}{\isacharcomma}{\isadigit{2}}{\isacharcomma}{\isadigit{3}}{\isacharcomma}{\isacharparenleft}{\isadigit{4}}{\isacharcolon}{\isacharcolon}nat{\isacharparenright}{\isacharbraceright}{\isacharcomma}\ \isanewline
+parcs\ {\isacharequal}\ {\isacharbraceleft}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}{\isachardot}\ v\isactrlsub {\isadigit{1}}\ {\isasymin}\ {\isacharbraceleft}{\isadigit{1}}{\isacharcomma}{\isadigit{2}}{\isacharcomma}{\isadigit{3}}{\isacharcomma}{\isacharparenleft}{\isadigit{4}}{\isacharcolon}{\isacharcolon}nat{\isacharparenright}{\isacharbraceright}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isasymin}\ {\isacharbraceleft}{\isadigit{1}}{\isacharcomma}{\isadigit{2}}{\isacharcomma}{\isadigit{3}}{\isacharcomma}{\isacharparenleft}{\isadigit{4}}{\isacharcolon}{\isacharcolon}nat{\isacharparenright}{\isacharbraceright}\ {\isasymand}\ v\isactrlsub {\isadigit{1}}\ {\isasymnoteq}\ v\isactrlsub {\isadigit{2}}{\isacharbraceright}\ \isanewline
+{\isacharbar}{\isacharparenright}{\isachardoublequoteclose}\ \isanewline
+\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+\ ExampleGraphWeightFunction\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}nat{\isasymtimes}nat{\isacharparenright}\ weight{\isacharunderscore}fun{\isachardoublequoteclose}\ \isakeyword{where}\ \isanewline
+{\isachardoublequoteopen}ExampleGraphWeightFunction\ {\isasymequiv}\ {\isacharparenleft}{\isasymlambda}{\isacharparenleft}v\isactrlsub {\isadigit{1}}{\isacharcomma}v\isactrlsub {\isadigit{2}}{\isacharparenright}{\isachardot}\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{1}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{2}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{2}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{1}}{\isacharparenright}\ then\ {\isadigit{1}}\ else\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{1}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{3}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{3}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{1}}{\isacharparenright}\ then\ {\isadigit{3}}\ else\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{1}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{4}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{4}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{1}}{\isacharparenright}\ then\ {\isadigit{6}}\ else\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{2}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{3}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{3}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{2}}{\isacharparenright}\ then\ {\isadigit{5}}\ else\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{2}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{4}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{4}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{2}}{\isacharparenright}\ then\ {\isadigit{4}}\ else\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharparenleft}if\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{3}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{4}}{\isacharparenright}\ {\isasymor}\ {\isacharparenleft}v\isactrlsub {\isadigit{1}}\ {\isacharequal}\ {\isadigit{4}}\ {\isasymand}\ v\isactrlsub {\isadigit{2}}\ {\isacharequal}\ {\isadigit{3}}{\isacharparenright}\ then\ {\isadigit{2}}\ else\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isadigit{0}}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\ \isanewline
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+We show that the graph $K_4$ of Figure \ref{exampleGraph} satisfies the conditions that were
+imposed in 
+\isa{distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph} and its parent locale, including for example no self loops 
+and distinctiveness. Of course there is still some effort required for this. However, it is necessary
+to manually construct trails or list all possible weight distributions. Additionally, instead of 
+$q!$ statements there are at most $\frac{3q}{2}$ statements needed.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{interpretation}\isamarkupfalse%
+\ example{\isacharcolon}\ \isanewline
+\ \ distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph\ ExampleGraph\ ExampleGraphWeightFunction%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\begin{isamarkuptext}%
+Now it is an easy task to prove that there is a trail of length 3. We only add the fact that
+\isa{ExampleGraph} is a \isa{distinct{\isacharunderscore}weighted{\isacharunderscore}pair{\isacharunderscore}graph} and lemma \isa{dec{\isacharunderscore}trail{\isacharunderscore}exists}.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+\ ExampleGraph{\isacharunderscore}decTrail{\isacharcolon}\isanewline
+\ \ {\isachardoublequoteopen}{\isasymexists}\ xs{\isachardot}\ decTrail\ ExampleGraph\ ExampleGraphWeightFunction\ xs\ {\isasymand}\ length\ xs\ {\isacharequal}\ {\isadigit{3}}{\isachardoublequoteclose}%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+\endinput
+%:%file=~/Dokumente/Masterarbeit/Test/UploadCode4/Ordered_Trail.thy%:%
+%:%24=9%:%
+%:%36=11%:%
+%:%37=12%:%
+%:%38=13%:%
+%:%39=14%:%
+%:%40=15%:%
+%:%41=16%:%
+%:%44=16%:%
+%:%45=17%:%
+%:%46=18%:%
+%:%47=19%:%
+%:%48=20%:%
+%:%49=21%:%
+%:%50=22%:%
+%:%51=23%:%
+%:%52=24%:%
+%:%58=27%:%
+%:%59=28%:%
+%:%60=29%:%
+%:%61=30%:%
+%:%62=31%:%
+%:%63=32%:%
+%:%64=33%:%
+%:%65=34%:%
+%:%70=36%:%
+%:%71=37%:%
+%:%72=38%:%
+%:%73=39%:%
+%:%74=40%:%
+%:%75=41%:%
+%:%76=42%:%
+%:%85=44%:%
+%:%97=45%:%
+%:%106=47%:%
+%:%118=49%:%
+%:%119=50%:%
+%:%120=51%:%
+%:%121=52%:%
+%:%122=53%:%
+%:%123=54%:%
+%:%124=55%:%
+%:%125=56%:%
+%:%126=57%:%
+%:%127=58%:%
+%:%128=59%:%
+%:%129=60%:%
+%:%130=61%:%
+%:%132=63%:%
+%:%133=63%:%
+%:%134=64%:%
+%:%135=65%:%
+%:%136=66%:%
+%:%137=67%:%
+%:%138=68%:%
+%:%139=69%:%
+%:%140=69%:%
+%:%141=70%:%
+%:%142=71%:%
+%:%143=73%:%
+%:%144=74%:%
+%:%145=75%:%
+%:%146=75%:%
+%:%147=76%:%
+%:%148=77%:%
+%:%149=78%:%
+%:%150=79%:%
+%:%151=80%:%
+%:%152=81%:%
+%:%153=81%:%
+%:%154=82%:%
+%:%156=84%:%
+%:%157=85%:%
+%:%158=86%:%
+%:%160=88%:%
+%:%161=88%:%
+%:%162=89%:%
+%:%163=90%:%
+%:%180=113%:%
+%:%181=113%:%
+%:%182=114%:%
+%:%183=115%:%
+%:%328=546%:%
+%:%329=547%:%
+%:%331=549%:%
+%:%332=549%:%
+%:%333=550%:%
+%:%350=599%:%
+%:%351=599%:%
+%:%352=600%:%
+%:%393=759%:%
+%:%394=760%:%
+%:%395=761%:%
+%:%396=762%:%
+%:%397=763%:%
+%:%399=765%:%
+%:%400=765%:%
+%:%401=766%:%
+%:%402=767%:%
+%:%403=768%:%
+%:%416=769%:%
+%:%417=770%:%
+%:%418=770%:%
+%:%419=771%:%
+%:%420=772%:%
+%:%440=788%:%
+%:%452=790%:%
+%:%453=791%:%
+%:%454=792%:%
+%:%455=793%:%
+%:%456=794%:%
+%:%457=795%:%
+%:%458=796%:%
+%:%459=797%:%
+%:%460=798%:%
+%:%461=799%:%
+%:%463=801%:%
+%:%464=801%:%
+%:%465=802%:%
+%:%466=803%:%
+%:%467=804%:%
+%:%469=809%:%
+%:%471=811%:%
+%:%472=811%:%
+%:%473=812%:%
+%:%474=812%:%
+%:%475=813%:%
+%:%476=813%:%
+%:%478=815%:%
+%:%479=816%:%
+%:%480=817%:%
+%:%481=818%:%
+%:%482=819%:%
+%:%484=821%:%
+%:%485=821%:%
+%:%486=822%:%
+%:%536=936%:%
+%:%539=937%:%
+%:%540=938%:%
+%:%541=938%:%
+%:%542=939%:%
+%:%557=950%:%
+%:%558=951%:%
+%:%559=952%:%
+%:%560=953%:%
+%:%561=954%:%
+%:%562=955%:%
+%:%563=956%:%
+%:%564=957%:%
+%:%565=958%:%
+%:%566=959%:%
+%:%567=960%:%
+%:%568=961%:%
+%:%569=962%:%
+%:%571=965%:%
+%:%572=965%:%
+%:%573=966%:%
+%:%574=967%:%
+%:%575=968%:%
+%:%682=1138%:%
+%:%683=1139%:%
+%:%684=1140%:%
+%:%685=1141%:%
+%:%686=1142%:%
+%:%687=1143%:%
+%:%688=1144%:%
+%:%689=1145%:%
+%:%690=1146%:%
+%:%691=1147%:%
+%:%693=1149%:%
+%:%694=1149%:%
+%:%695=1150%:%
+%:%708=1200%:%
+%:%709=1201%:%
+%:%710=1202%:%
+%:%711=1202%:%
+%:%712=1203%:%
+%:%797=1249%:%
+%:%809=1251%:%
+%:%810=1252%:%
+%:%812=1254%:%
+%:%813=1254%:%
+%:%814=1255%:%
+%:%815=1256%:%
+%:%830=1308%:%
+%:%831=1309%:%
+%:%833=1311%:%
+%:%834=1311%:%
+%:%835=1312%:%
+%:%836=1313%:%
+%:%878=1371%:%
+%:%879=1372%:%
+%:%880=1373%:%
+%:%881=1374%:%
+%:%883=1377%:%
+%:%884=1377%:%
+%:%885=1378%:%
+%:%886=1379%:%
+%:%891=1384%:%
+%:%892=1385%:%
+%:%893=1386%:%
+%:%894=1387%:%
+%:%895=1388%:%
+%:%897=1390%:%
+%:%898=1390%:%
+%:%899=1391%:%
+%:%900=1392%:%
+%:%903=1395%:%
+%:%904=1396%:%
+%:%906=1398%:%
+%:%907=1398%:%
+%:%961=1558%:%
+%:%962=1559%:%
+%:%964=1561%:%
+%:%965=1561%:%
+%:%966=1562%:%
+%:%967=1563%:%
+%:%987=1573%:%
+%:%1012=1636%:%
+%:%1013=1637%:%
+%:%1014=1638%:%
+%:%1015=1639%:%
+%:%1016=1640%:%
+%:%1017=1641%:%
+%:%1018=1642%:%
+%:%1019=1643%:%
+%:%1021=1645%:%
+%:%1022=1645%:%
+%:%1023=1646%:%
+%:%1024=1647%:%
+%:%1025=1648%:%
+%:%1049=1709%:%
+%:%1052=1710%:%
+%:%1053=1711%:%
+%:%1054=1711%:%
+%:%1055=1712%:%
+%:%1083=1743%:%
+%:%1084=1744%:%
+%:%1085=1745%:%
+%:%1087=1747%:%
+%:%1088=1747%:%
+%:%1089=1748%:%
+%:%1104=1760%:%
+%:%1105=1761%:%
+%:%1106=1762%:%
+%:%1107=1763%:%
+%:%1108=1764%:%
+%:%1109=1765%:%
+%:%1111=1767%:%
+%:%1112=1767%:%
+%:%1113=1768%:%
+%:%1126=1779%:%
+%:%1127=1780%:%
+%:%1128=1781%:%
+%:%1129=1781%:%
+%:%1130=1782%:%
+%:%1131=1783%:%
+%:%1146=1786%:%
+%:%1147=1787%:%
+%:%1149=1790%:%
+%:%1150=1790%:%
+%:%1151=1791%:%
+%:%1152=1792%:%
+%:%1185=1891%:%
+%:%1197=1893%:%
+%:%1198=1894%:%
+%:%1199=1895%:%
+%:%1200=1896%:%
+%:%1202=1898%:%
+%:%1203=1898%:%
+%:%1204=1899%:%
+%:%1207=1902%:%
+%:%1208=1903%:%
+%:%1209=1904%:%
+%:%1210=1904%:%
+%:%1211=1905%:%
+%:%1218=1912%:%
+%:%1260=1949%:%
+%:%1261=1950%:%
+%:%1262=1951%:%
+%:%1263=1952%:%
+%:%1264=1953%:%
+%:%1265=1954%:%
+%:%1267=1956%:%
+%:%1268=1956%:%
+%:%1269=1957%:%
+%:%1284=2054%:%
+%:%1285=2055%:%
+%:%1287=2057%:%
+%:%1288=2057%:%
+%:%1289=2058%:%
